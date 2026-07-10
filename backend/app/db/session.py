@@ -1,6 +1,8 @@
+"""
+Database engine, session factory, and dependency injection helper.
+"""
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
-from app.config import settings
+from app.core.config import settings
 
 engine = create_async_engine(
     settings.database_url,
@@ -15,11 +17,8 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-class Base(DeclarativeBase):
-    pass
-
-
 async def get_db():
+    """FastAPI dependency — yields a DB session per request."""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -32,6 +31,12 @@ async def get_db():
 
 
 async def init_db():
-    """Create all tables on startup (dev mode). Use Alembic in production."""
+    """
+    Create all tables on startup (development only).
+    In production: use `alembic upgrade head` instead.
+    """
+    from app.db.base import Base
+    import app.models.problem  # noqa: F401 — ensure models are registered
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

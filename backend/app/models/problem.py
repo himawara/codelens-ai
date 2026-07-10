@@ -1,15 +1,18 @@
+"""
+ORM models for problem solving sessions and hint history.
+"""
+import uuid
+import enum
 from sqlalchemy import Column, String, Integer, DateTime, Text, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import uuid
-import enum
-from app.database import Base
+from app.db.base import Base
 
 
 class HintLevel(str, enum.Enum):
-    nudge = "nudge"          # Just a direction pointer
-    approach = "approach"    # High-level strategy
-    pseudocode = "pseudocode"  # Step-by-step logic, no code
+    nudge = "nudge"            # Concept pointer only
+    approach = "approach"      # High-level strategy, no steps
+    pseudocode = "pseudocode"  # Step-by-step logic, no real code
 
 
 class ProblemDifficulty(str, enum.Enum):
@@ -28,7 +31,7 @@ class SolveSession(Base):
     language = Column(String(32), default="python")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    solved = Column(Integer, default=0)  # 0=unsolved, 1=solved
+    solved = Column(Integer, default=0)  # 0 = unsolved, 1 = solved
 
     hints = relationship("HintRecord", back_populates="session", cascade="all, delete-orphan")
 

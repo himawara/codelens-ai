@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List
-from app.database import get_db
-from app.models import SolveSession, HintRecord
-from app.schemas import SessionCreate, SessionOut, SessionUpdate, SessionListItem
+from app.db.session import get_db
+from app.models.problem import SolveSession, HintRecord
+from app.schemas.session import SessionCreate, SessionOut, SessionUpdate, SessionListItem
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -27,10 +27,10 @@ async def list_sessions(skip: int = 0, limit: int = 20, db: AsyncSession = Depen
 
     items = []
     for s in sessions:
-        hint_count_result = await db.execute(
+        count_result = await db.execute(
             select(func.count(HintRecord.id)).where(HintRecord.session_id == s.id)
         )
-        hint_count = hint_count_result.scalar() or 0
+        hint_count = count_result.scalar() or 0
         items.append(SessionListItem(
             id=s.id,
             problem_title=s.problem_title,

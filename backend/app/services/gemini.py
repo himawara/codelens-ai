@@ -8,11 +8,10 @@ Hint levels:
 
 The prompt engineering is the core IP of this service.
 """
-
 import google.generativeai as genai
 from typing import AsyncGenerator
-from app.config import settings
-from app.models import HintLevel
+from app.core.config import settings
+from app.models.problem import HintLevel
 
 genai.configure(api_key=settings.gemini_api_key)
 
@@ -37,12 +36,10 @@ Do not explain the approach. Just a gentle pointer.
 Example good nudge: "Think about what data structure allows O(1) lookup."
 Example bad nudge: "You should use a hashmap to store visited elements." (too specific)
 """,
-
     HintLevel.approach: """The user needs a bit more help. Describe the high-level approach
 in 3-5 sentences. No step-by-step breakdown, no pseudocode, no code.
 Focus on WHAT strategy to use and WHY it works here.
 """,
-
     HintLevel.pseudocode: """The user needs a detailed breakdown. Provide step-by-step logic
 in plain English (pseudocode). Number the steps. Be specific about data structures
 and operations but use natural language, not code syntax.
@@ -58,10 +55,7 @@ async def stream_hint(
     previous_hints: list[str] | None = None,
 ) -> AsyncGenerator[str, None]:
     """Stream hint tokens from Gemini."""
-
-    context_parts = [
-        f"PROBLEM:\n{problem_statement}",
-    ]
+    context_parts = [f"PROBLEM:\n{problem_statement}"]
 
     if user_code and user_code.strip():
         context_parts.append(f"USER'S CURRENT CODE:\n{user_code}")
@@ -69,7 +63,7 @@ async def stream_hint(
         context_parts.append("USER'S CURRENT CODE: (not provided yet)")
 
     if previous_hints:
-        hints_text = "\n---\n".join(previous_hints[-2:])  # last 2 hints for context
+        hints_text = "\n---\n".join(previous_hints[-2:])
         context_parts.append(f"PREVIOUS HINTS ALREADY GIVEN:\n{hints_text}")
         context_parts.append("Do NOT repeat information from previous hints.")
 
@@ -85,27 +79,8 @@ async def stream_hint(
         ),
     )
 
-    response = await model.generate_content_async(
-        user_message,
-        stream=True,
-    )
+    response = await model.generate_content_async(user_message, stream=True)
 
     async for chunk in response:
         if chunk.text:
             yield chunk.text
-
-
-async def get_hint_full(
-    problem_statement: str,
-    hint_level: HintLevel,
-    user_code: str | None = None,
-    previous_hints: list[str] | None = None,
-) -> tuple[str, int]:
-    """Get complete hint text + token count (for saving to DB)."""
-    full_text = ""
-    async for chunk in stream_hint(problem_statement, hint_level, user_code, previous_hints):
-        full_text += chunk
-
-    # Approximate token count (Gemini doesn't return usage in streaming easily)
-    token_estimate = len(full_text.split()) * 4 // 3
-    return full_text, token_estimate

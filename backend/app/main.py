@@ -1,17 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.database import init_db
-from app.routers import hints, sessions
-from app.config import settings
+from app.db.session import init_db
+from app.api.v1.router import api_router
+from app.core.config import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     await init_db()
     yield
-    # Shutdown (cleanup if needed)
 
 
 app = FastAPI(
@@ -29,10 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(sessions.router, prefix="/api/v1")
-app.include_router(hints.router, prefix="/api/v1")
+app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/health")
+@app.get("/health", tags=["meta"])
 async def health():
     return {"status": "ok", "service": "codelens-ai"}

@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.database import get_db
-from app.models import SolveSession, HintRecord
-from app.schemas import HintRequest, HintResponse
-from app.services.gemini import stream_hint, get_hint_full
+from app.db.session import get_db
+from app.models.problem import SolveSession, HintRecord
+from app.schemas.hint import HintRequest
+from app.services.gemini import stream_hint
 
 router = APIRouter(prefix="/hints", tags=["hints"])
 
@@ -32,7 +32,6 @@ async def stream_hint_endpoint(payload: HintRequest, db: AsyncSession = Depends(
       data: <token>\\n\\n
       data: [DONE]\\n\\n
     """
-    # Validate session exists
     result = await db.execute(select(SolveSession).where(SolveSession.id == payload.session_id))
     session = result.scalar_one_or_none()
     if not session:
@@ -50,11 +49,9 @@ async def stream_hint_endpoint(payload: HintRequest, db: AsyncSession = Depends(
                 previous_hints=previous_hints,
             ):
                 full_text.append(token)
-                # SSE format: "data: <payload>\n\n"
                 yield f"data: {json.dumps(token)}\n\n"
-                await asyncio.sleep(0)  # yield control to event loop
+                await asyncio.sleep(0)
 
-            # Save completed hint to DB
             complete_hint = "".join(full_text)
             token_estimate = len(complete_hint.split()) * 4 // 3
             hint_record = HintRecord(
@@ -66,30 +63,28 @@ async def stream_hint_endpoint(payload: HintRequest, db: AsyncSession = Depends(
             )
             db.add(hint_record)
             await db.commit()
-
-            yield f"data: [DONE]\n\n"
+            yield "data: [DONE]\n\n"
 
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
-            yield f"data: [DONE]\n\n"
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",  # Disable nginx buffering
+            "X-Accel-Buffering": "no",
         },
     )
 
 
-@router.get("/{session_id}")
+@router.get("/{session_id}", tags=["hints"])
 async def get_session_hints(session_id: str, db: AsyncSession = Depends(get_db)):
-    """Return all hints for a session (for history view)."""
+    """Return all hints for a session (history view)."""
     result = await db.execute(
         select(HintRecord)
         .where(HintRecord.session_id == session_id)
         .order_by(HintRecord.created_at.asc())
     )
-    hints = result.scalars().all()
-    return hints
+    return result.scalars().all()

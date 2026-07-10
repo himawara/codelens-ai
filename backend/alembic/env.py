@@ -8,9 +8,9 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.database import Base
-from app.models import SolveSession, HintRecord  # noqa: F401 — import models so Base knows them
-from app.config import settings
+from app.db.base import Base
+from app.models.problem import SolveSession, HintRecord  # noqa: F401
+from app.core.config import settings
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
