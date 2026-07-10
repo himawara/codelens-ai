@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite3
+
+# Env
+.env
+!.env.example
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Extension build artifacts
+extension/*.zip
+
+# Alembic
+alembic/versions/*.pyc

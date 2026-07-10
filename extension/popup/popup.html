@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeLens AI</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <span class="logo">🔍</span>
+      <span class="title">CodeLens AI</span>
+      <span id="status-dot" class="dot dot--offline" title="Backend status"></span>
+    </header>
+
+    <!-- State: not on leetcode -->
+    <div id="view-no-problem" class="view hidden">
+      <div class="empty-state">
+        <p class="icon">🧩</p>
+        <p>Open a LeetCode problem to get hints.</p>
+        <a href="http://localhost:5173" target="_blank" class="btn btn--secondary btn--sm">Open Dashboard →</a>
+      </div>
+    </div>
+
+    <!-- State: problem detected, no session -->
+    <div id="view-setup" class="view hidden">
+      <div class="problem-meta">
+        <span id="problem-title" class="problem-title">—</span>
+        <span id="problem-diff" class="badge">—</span>
+      </div>
+      <div class="field">
+        <label>Language</label>
+        <select id="lang-select">
+          <option value="python">Python</option>
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="java">Java</option>
+          <option value="cpp">C++</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+        </select>
+      </div>
+      <button id="btn-start" class="btn btn--primary">Start Session</button>
+    </div>
+
+    <!-- State: session active -->
+    <div id="view-active" class="view hidden">
+      <div class="problem-meta">
+        <span id="active-title" class="problem-title">—</span>
+        <span id="active-diff" class="badge">—</span>
+      </div>
+
+      <!-- Hint level tabs -->
+      <div class="hint-levels">
+        <button class="level-btn active" data-level="nudge">Nudge</button>
+        <button class="level-btn" data-level="approach">Approach</button>
+        <button class="level-btn" data-level="pseudocode">Pseudocode</button>
+      </div>
+
+      <div class="level-desc" id="level-desc">Points you at the right concept only.</div>
+
+      <button id="btn-hint" class="btn btn--primary">Get Hint</button>
+
+      <!-- Hint output -->
+      <div id="hint-box" class="hint-box hidden">
+        <div id="hint-text"></div>
+        <span id="hint-cursor" class="cursor hidden"></span>
+      </div>
+
+      <!-- Footer actions -->
+      <div class="footer-actions">
+        <button id="btn-solved" class="btn btn--success btn--sm">✓ Solved</button>
+        <button id="btn-new-session" class="btn btn--ghost btn--sm">New Problem</button>
+        <a href="http://localhost:5173/dashboard" target="_blank" class="btn btn--ghost btn--sm">Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Error banner -->
+    <div id="error-banner" class="error-banner hidden"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
